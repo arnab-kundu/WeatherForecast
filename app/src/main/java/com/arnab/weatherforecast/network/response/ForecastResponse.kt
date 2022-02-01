@@ -1,4 +1,4 @@
-package com.mobiquity.arnab.weather.network.response
+package com.arnab.weatherforecast.network.response
 
 import com.google.gson.annotations.SerializedName
 
