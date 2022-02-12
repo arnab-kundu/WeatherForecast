@@ -18,7 +18,6 @@ import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
@@ -27,6 +26,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -34,16 +34,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import coil.compose.rememberImagePainter
 import com.arnab.weatherforecast.constants.ImageUrls
 import com.arnab.weatherforecast.network.RetrofitClient
 import com.arnab.weatherforecast.network.WeatherApi
+import com.arnab.weatherforecast.network.response.ForecastResponse
 import com.arnab.weatherforecast.network.response.WeatherResponse
+import com.arnab.weatherforecast.repo.WeatherRepository
 import com.arnab.weatherforecast.ui.theme.WeatherForecastTheme
-import com.arnab.weatherforecast.utils.Constants
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -63,7 +62,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        networkCall()
+        backgroundThreadWork()
         setContent {
             WeatherForecastTheme {
                 // A surface container using the 'background' color from the theme
@@ -121,7 +120,7 @@ class MainActivity : ComponentActivity() {
 
     private fun networkCall() {
         val weatherApi = RetrofitClient.retrofitInstance!!.create(WeatherApi::class.java)
-        weatherApi.getCurrentWeatherReportAPI("22.6753717", "88.852145", Constants.WEATHER_API_KEY, "metric")
+        weatherApi.getCurrentWeatherReportAPI("22.6753717", "88.852145")
             .enqueue(object : Callback<WeatherResponse> {
                 override fun onResponse(call: Call<WeatherResponse>, response: Response<WeatherResponse>) {
                     if (response.isSuccessful) {
@@ -134,7 +133,7 @@ class MainActivity : ComponentActivity() {
                             mMaxTemperature.value = responseBody.main.temp_max.roundToInt()
                             mMinTemperature.value = responseBody.main.temp_min.roundToInt()
                             mHumidity.value = responseBody.main.humidity
-                            mVisibilityDistance.value = responseBody.visibility/1000
+                            mVisibilityDistance.value = responseBody.visibility / 1000
                         }
                     }
                 }
@@ -143,6 +142,57 @@ class MainActivity : ComponentActivity() {
                     //TODO("Not yet implemented")
                 }
             })
+    }
+
+    fun networkRepo() {
+        val repo = WeatherRepository()
+        val responseBody: WeatherResponse? = repo.getCurrentWeatherReportForGeometricLocation(null)
+        if (responseBody != null) {
+            Log.i(TAG, "Response: ${responseBody.toString()}")
+            mTemperature.value = responseBody.main.temp.roundToInt()
+            mMaxTemperature.value = responseBody.main.temp_max.roundToInt()
+            mMinTemperature.value = responseBody.main.temp_min.roundToInt()
+            mHumidity.value = responseBody.main.humidity
+            mVisibilityDistance.value = responseBody.visibility / 1000
+        }
+    }
+
+    private fun networkCallWeatherForecastAPI() {
+        val weatherApi = RetrofitClient.retrofitInstance!!.create(WeatherApi::class.java)
+        weatherApi.getWeatherForecastAPI("22.65", "88.85")
+            .enqueue(object : Callback<ForecastResponse> {
+                override fun onResponse(call: Call<ForecastResponse>, response: Response<ForecastResponse>) {
+                    //TODO("Not yet implemented")
+                    if (response.isSuccessful) {
+                        Log.i(TAG, "onResponse: ")
+                    }
+                }
+
+                override fun onFailure(call: Call<ForecastResponse>, t: Throwable) {
+                    //TODO("Not yet implemented")
+                }
+
+            })
+    }
+
+    private fun backgroundThreadWork() {
+        val repo = WeatherRepository()
+        CoroutineScope(context = Dispatchers.Main).launch {
+            val deferred: Deferred<WeatherResponse?> = CoroutineScope(context = Dispatchers.IO).async {
+                delay(5000)
+                repo.getCurrentWeatherReportForGeometricLocation(null)// TODO provide location(lat,long)
+            }
+            val responseBody: WeatherResponse? = deferred.await()
+            if (responseBody != null) {
+                Log.i(TAG, "Response: ${responseBody.toString()}")
+                mTemperature.value = responseBody.main.temp.roundToInt()
+                mMaxTemperature.value = responseBody.main.temp_max.roundToInt()
+                mMinTemperature.value = responseBody.main.temp_min.roundToInt()
+                mHumidity.value = responseBody.main.humidity
+                mVisibilityDistance.value = responseBody.visibility / 1000
+            }
+        }
+
     }
 
 
@@ -245,6 +295,23 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
+    fun getBackgroundImageFromLocal(weatherDescription: String) {
+
+        var drawableId = R.drawable.clear_sky_image
+        if (weatherDescription == "scattered clouds") {
+            drawableId = R.drawable.scattered_clouds
+        }
+        WeatherForecastTheme {
+            Image(
+                painter = painterResource(drawableId),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+            )
+        }
+    }
+
+    @Composable
     fun getHumidity(humidity: Int) {
         val humidity by mHumidity
         Text(text = "$humidity%", color = Color.White, fontSize = 16.sp)
@@ -264,6 +331,12 @@ class MainActivity : ComponentActivity() {
     @Preview
     @Composable
     fun getLayoutPreview() {
+        Image(
+            painter = painterResource(R.drawable.clear_sky_image),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.FillBounds,
+        )
         Surface(color = Color.Transparent, modifier = Modifier
             .padding(16.dp)
             .clickable { }) {
