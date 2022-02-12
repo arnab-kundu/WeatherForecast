@@ -11,7 +11,7 @@ android {
         minSdk 25
         targetSdk 31
         versionCode 1
-        versionName "1.0.1"
+        versionName "1.0.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -65,6 +65,8 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
 
+    // GPS Location
+    implementation 'com.google.android.gms:play-services-location:11.0.1'
 
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'

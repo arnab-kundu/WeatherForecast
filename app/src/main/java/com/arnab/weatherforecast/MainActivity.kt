@@ -1,7 +1,11 @@
 package com.arnab.weatherforecast
 
+import android.annotation.SuppressLint
+import android.content.IntentSender.SendIntentException
+import android.location.Location
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.BorderStroke
@@ -42,15 +46,24 @@ import com.arnab.weatherforecast.network.response.ForecastResponse
 import com.arnab.weatherforecast.network.response.WeatherResponse
 import com.arnab.weatherforecast.repo.WeatherRepository
 import com.arnab.weatherforecast.ui.theme.WeatherForecastTheme
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.LocationListener
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import kotlin.math.roundToInt
 
+
 private const val TAG = "MainActivity"
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(),
+    GoogleApiClient.ConnectionCallbacks,
+    GoogleApiClient.OnConnectionFailedListener,
+    LocationListener {
 
     val mTemperature = mutableStateOf(0)
     val mMaxTemperature = mutableStateOf(0)
@@ -60,9 +73,16 @@ class MainActivity : ComponentActivity() {
     // or
     //val mTemperature = MutableStateFlow(0)
 
+
+    //Define a request code to send to Google Play services
+    private val CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000
+    private var mGoogleApiClient: GoogleApiClient? = null
+    private var mLocationRequest: LocationRequest? = null
+    private var currentLatitude = 0.0
+    private var currentLongitude = 0.0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        backgroundThreadWork()
         setContent {
             WeatherForecastTheme {
                 // A surface container using the 'background' color from the theme
@@ -115,9 +135,46 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
+
+        mGoogleApiClient =
+            GoogleApiClient.Builder(this) // The next two lines tell the new client that “this” current class will handle connection stuff
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this) //fourth line adds the LocationServices API endpoint from GooglePlayServices
+                .addApi(LocationServices.API)
+                .build()
+
+        // Create the LocationRequest object
+
+        // Create the LocationRequest object
+        mLocationRequest = LocationRequest.create()
+            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+            .setInterval(10 * 1000) // 10 seconds, in milliseconds
+            .setFastestInterval(1 * 1000) // 1 second, in milliseconds
+
+
     }
 
+    override fun onResume() {
+        super.onResume()
+        //Now lets connect to the API
+        mGoogleApiClient?.connect()
+    }
 
+    override fun onPause() {
+        super.onPause()
+        Log.v(TAG, "onPause()")
+
+        //Disconnect from API onPause()
+        if (mGoogleApiClient?.isConnected() == true) {
+            LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+            mGoogleApiClient?.disconnect();
+        }
+
+
+    }
+
+    @Deprecated("unused")
     private fun networkCall() {
         val weatherApi = RetrofitClient.retrofitInstance!!.create(WeatherApi::class.java)
         weatherApi.getCurrentWeatherReportAPI("22.6753717", "88.852145")
@@ -139,11 +196,12 @@ class MainActivity : ComponentActivity() {
                 }
 
                 override fun onFailure(call: Call<WeatherResponse>, t: Throwable) {
-                    //TODO("Not yet implemented")
+
                 }
             })
     }
 
+    @Deprecated("unused")
     fun networkRepo() {
         val repo = WeatherRepository()
         val responseBody: WeatherResponse? = repo.getCurrentWeatherReportForGeometricLocation(null)
@@ -157,6 +215,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @Deprecated("unused")
     private fun networkCallWeatherForecastAPI() {
         val weatherApi = RetrofitClient.retrofitInstance!!.create(WeatherApi::class.java)
         weatherApi.getWeatherForecastAPI("22.65", "88.85")
@@ -175,12 +234,15 @@ class MainActivity : ComponentActivity() {
             })
     }
 
-    private fun backgroundThreadWork() {
+    /**
+     * API call
+     */
+    private fun backgroundThreadWork(location: Location?) {
         val repo = WeatherRepository()
         CoroutineScope(context = Dispatchers.Main).launch {
             val deferred: Deferred<WeatherResponse?> = CoroutineScope(context = Dispatchers.IO).async {
                 delay(5000)
-                repo.getCurrentWeatherReportForGeometricLocation(null)// TODO provide location(lat,long)
+                repo.getCurrentWeatherReportForGeometricLocation(location)// TODO provide location(lat,long)
             }
             val responseBody: WeatherResponse? = deferred.await()
             if (responseBody != null) {
@@ -383,5 +445,64 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    // TODO Add the Missing Permission CHECK for Location
+    @SuppressLint("MissingPermission")
+    override fun onConnected(bundle: Bundle?) {
+        val location = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient)
+
+        if (location == null) {
+            Log.e(TAG, "onConnected: Location: $location")
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this)
+        } else {
+            //If everything went fine lets get latitude and longitude
+            currentLatitude = location.latitude
+            currentLongitude = location.longitude
+            Toast.makeText(this, "Lat: $currentLatitude, Long: $currentLongitude", Toast.LENGTH_LONG).show();
+            Log.i(TAG, "onConnected: Lat: $currentLatitude, Long: $currentLongitude")
+            backgroundThreadWork(location = location)
+        }
+    }
+
+    override fun onConnectionSuspended(i: Int) {
+    }
+
+    override fun onConnectionFailed(connectionResult: ConnectionResult) {
+
+        /** Google Play services can resolve some errors it detects.
+         * If the error has a resolution, try sending an Intent to
+         * start a Google Play services activity that can resolve
+         * error.
+         */
+        if (connectionResult.hasResolution()) {
+            try {
+                // Start an Activity that tries to resolve the error
+                connectionResult.startResolutionForResult(this, CONNECTION_FAILURE_RESOLUTION_REQUEST)
+                /**
+                 * Thrown if Google Play services canceled the original
+                 * PendingIntent
+                 */
+            } catch (e: SendIntentException) {
+                // Log the error
+                e.printStackTrace()
+            }
+        } else {
+            /**
+             * If no resolution is available, display a dialog to the
+             * user with the error.
+             */
+            Log.e("Error", "Location services connection failed with code " + connectionResult.errorCode)
+        }
+    }
+
+    override fun onLocationChanged(location: Location?) {
+        if (location != null) {
+            currentLatitude = location.getLatitude()
+            currentLongitude = location.getLongitude()
+        }
+        Toast.makeText(this, "Lat: $currentLatitude, Long: $currentLongitude", Toast.LENGTH_LONG).show();
+        Log.i(TAG, "onLocationChanged: Lat: $currentLatitude, Long: $currentLongitude")
+        backgroundThreadWork(location = location)
     }
 }
