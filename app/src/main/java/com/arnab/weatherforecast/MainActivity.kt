@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.arnab.weatherforecast.constants.ImageUrls
+import com.arnab.weatherforecast.constants.WeatherMain
 import com.arnab.weatherforecast.network.RetrofitClient
 import com.arnab.weatherforecast.network.WeatherApi
 import com.arnab.weatherforecast.network.response.ForecastResponse
@@ -55,6 +56,7 @@ import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.lang.Exception
 import kotlin.math.roundToInt
 
 
@@ -65,13 +67,15 @@ class MainActivity : ComponentActivity(),
     GoogleApiClient.OnConnectionFailedListener,
     LocationListener {
 
+    //val mTemperature = MutableStateFlow(0)
+    // or
     val mTemperature = mutableStateOf(0)
     val mMaxTemperature = mutableStateOf(0)
     val mMinTemperature = mutableStateOf(0)
     val mVisibilityDistance = mutableStateOf(0)
     val mHumidity = mutableStateOf(0)
-    // or
-    //val mTemperature = MutableStateFlow(0)
+    val mLocationName = mutableStateOf("")
+    val mWeatherMain = mutableStateOf(WeatherMain.CLEAR.name)
 
 
     //Define a request code to send to Google Play services
@@ -86,7 +90,7 @@ class MainActivity : ComponentActivity(),
         setContent {
             WeatherForecastTheme {
                 // A surface container using the 'background' color from the theme
-                getBackgroundImage()
+                getBackgroundImageFromLocal()
                 Surface(color = Color.Transparent, modifier = Modifier
                     .padding(16.dp)
                     .clickable { }) {
@@ -252,6 +256,8 @@ class MainActivity : ComponentActivity(),
                 mMinTemperature.value = responseBody.main.temp_min.roundToInt()
                 mHumidity.value = responseBody.main.humidity
                 mVisibilityDistance.value = responseBody.visibility / 1000
+                mLocationName.value = responseBody.name
+                mWeatherMain.value = responseBody.weather[0].main
             }
         }
 
@@ -260,8 +266,9 @@ class MainActivity : ComponentActivity(),
 
     @Composable
     fun getPlaceName(placeName: String) {
+        val locationName by mLocationName
         Text(
-            text = placeName,
+            text = locationName,
             modifier = Modifier,
             color = Color.White,
             fontSize = 20.sp,
@@ -357,12 +364,20 @@ class MainActivity : ComponentActivity(),
     }
 
     @Composable
-    fun getBackgroundImageFromLocal(weatherDescription: String) {
-
+    fun getBackgroundImageFromLocal() {
+        val weatherMain by mWeatherMain
+        mWeatherMain
         var drawableId = R.drawable.clear_sky_image
-        if (weatherDescription == "scattered clouds") {
-            drawableId = R.drawable.scattered_clouds
+        when (weatherMain) {
+            WeatherMain.CLEAR.name -> drawableId = R.drawable.clear_night
+            WeatherMain.CLEAR.name -> drawableId = R.drawable.clear_sky_image
+            WeatherMain.CLOUDS.name -> drawableId = R.drawable.cloudy
+            WeatherMain.RAIN.name -> drawableId = R.drawable.after_shower
+            WeatherMain.RAIN.name -> drawableId = R.drawable.light_rain
+            else -> Exception("No matching climate found")
         }
+
+
         WeatherForecastTheme {
             Image(
                 painter = painterResource(drawableId),
@@ -503,6 +518,6 @@ class MainActivity : ComponentActivity(),
         }
         Toast.makeText(this, "Lat: $currentLatitude, Long: $currentLongitude", Toast.LENGTH_LONG).show();
         Log.i(TAG, "onLocationChanged: Lat: $currentLatitude, Long: $currentLongitude")
-        backgroundThreadWork(location = location)
+        //backgroundThreadWork(location = location)
     }
 }
