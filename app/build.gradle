@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
 }
+apply from: 'app-version.gradle'
 
 android {
     compileSdk 31
@@ -10,8 +11,10 @@ android {
         applicationId "com.arnab.weatherforecast"
         minSdk 25
         targetSdk 31
-        versionCode 1
-        versionName "1.0.3"
+
+        versionName "${project.ext.version.major}.${project.ext.version.minor}.${project.ext.version.build}"
+        versionCode project.ext.version.major * 1000000 + project.ext.version.minor * 1000 + project.ext.version.build
+
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
