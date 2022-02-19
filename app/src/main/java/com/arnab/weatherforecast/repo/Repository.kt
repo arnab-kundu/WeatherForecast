@@ -1,8 +1,8 @@
 package com.arnab.weatherforecast.repo
 
 import android.location.Location
-import com.arnab.weatherforecast.network.response.ForecastResponse
-import com.arnab.weatherforecast.network.response.WeatherResponse
+import com.arnab.network.response.ForecastResponse
+import com.arnab.network.response.WeatherResponse
 
 interface Repository {
 

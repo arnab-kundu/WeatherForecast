@@ -1,4 +1,4 @@
-package com.arnab.weatherforecast.utils
+package com.arnab.network
 
 import java.io.IOException
 

@@ -1,7 +1,5 @@
-package com.arnab.weatherforecast.network
+package com.arnab.network
 
-import com.arnab.weatherforecast.BuildConfig
-import com.arnab.weatherforecast.utils.Constants
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -18,7 +16,7 @@ object RetrofitClient {
                 val okHttpClient: OkHttpClient.Builder = OkHttpClient.Builder()
                 okHttpClient.readTimeout(3000, TimeUnit.MILLISECONDS)
                 okHttpClient.connectTimeout(3000, TimeUnit.MILLISECONDS)
-                if (BuildConfig.DEBUG) {
+                if (false) {
                     val interceptor = HttpLoggingInterceptor()
                     interceptor.level = HttpLoggingInterceptor.Level.BODY
                     okHttpClient.addInterceptor(interceptor)

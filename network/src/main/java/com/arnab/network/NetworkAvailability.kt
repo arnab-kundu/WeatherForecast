@@ -1,8 +1,9 @@
-package com.arnab.weatherforecast.utils
+package com.arnab.network
 
 import android.content.Context
 import android.net.ConnectivityManager
 
+@Deprecated("unused")
 object NetworkAvailability {
 
     private const val TAG = "NetworkAvailability"

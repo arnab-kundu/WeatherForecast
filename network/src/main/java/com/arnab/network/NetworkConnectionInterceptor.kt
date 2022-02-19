@@ -1,12 +1,12 @@
-package com.arnab.weatherforecast.network
+package com.arnab.network
 
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import com.arnab.weatherforecast.utils.NoInternetException
 import okhttp3.Interceptor
 import okhttp3.Response
 
+@Deprecated("unused")
 class NetworkConnectionInterceptor(
     context: Context
 ) : Interceptor {

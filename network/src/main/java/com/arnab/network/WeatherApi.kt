@@ -1,8 +1,7 @@
-package com.arnab.weatherforecast.network
+package com.arnab.network
 
-import com.arnab.weatherforecast.network.response.ForecastResponse
-import com.arnab.weatherforecast.network.response.WeatherResponse
-import com.arnab.weatherforecast.utils.Constants
+import com.arnab.network.response.ForecastResponse
+import com.arnab.network.response.WeatherResponse
 import okhttp3.OkHttpClient
 import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor

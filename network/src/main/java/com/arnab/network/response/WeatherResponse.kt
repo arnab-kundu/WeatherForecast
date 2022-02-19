@@ -1,4 +1,4 @@
-package com.arnab.weatherforecast.network.response
+package com.arnab.network.response
 
 data class WeatherResponse(
     val base: String,

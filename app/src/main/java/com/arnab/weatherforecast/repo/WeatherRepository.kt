@@ -2,10 +2,10 @@ package com.arnab.weatherforecast.repo
 
 import android.location.Location
 import android.util.Log
-import com.arnab.weatherforecast.network.RetrofitClient
-import com.arnab.weatherforecast.network.WeatherApi
-import com.arnab.weatherforecast.network.response.ForecastResponse
-import com.arnab.weatherforecast.network.response.WeatherResponse
+import com.arnab.network.RetrofitClient
+import com.arnab.network.WeatherApi
+import com.arnab.network.response.ForecastResponse
+import com.arnab.network.response.WeatherResponse
 import com.arnab.weatherforecast.utils.Constants
 import retrofit2.Call
 import retrofit2.Callback
@@ -45,7 +45,6 @@ class WeatherRepository : Repository {
             latitude = location?.latitude?.toString() ?: "22.6753717",
             longitude = location?.longitude?.toString() ?: "88.852145",
             units = "metric",
-            apiKey = Constants.WEATHER_API_KEY
         ).execute()
         return if (response.isSuccessful) {
             Log.i(mTAG, "Status code:${response.code()}")
