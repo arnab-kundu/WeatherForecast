@@ -14,9 +14,9 @@ import retrofit2.http.Query
 
 
 /**
- * Retrofit interface for API call.
+ * *Retrofit interface for Weather API call.*
  */
-interface WeatherApi : BaseApi {
+interface WeatherApi {
 
     /**
      * **Current Weather Report API**
