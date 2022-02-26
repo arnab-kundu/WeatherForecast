@@ -19,3 +19,23 @@ buildscript {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+task test {
+
+}
+
+task testDebugUnitTest {
+
+}
+
+task testReleaseUnitTest {
+
+}
+
+task createDebugCoverageReport {
+
+}
+
+task jacocoTestReport {
+
+}

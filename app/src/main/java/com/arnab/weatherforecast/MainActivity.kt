@@ -39,12 +39,12 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
-import com.arnab.weatherforecast.constants.ImageUrls
-import com.arnab.weatherforecast.constants.WeatherMain
 import com.arnab.network.RetrofitClient
 import com.arnab.network.WeatherApi
 import com.arnab.network.response.ForecastResponse
 import com.arnab.network.response.WeatherResponse
+import com.arnab.weatherforecast.constants.ImageUrls
+import com.arnab.weatherforecast.constants.WeatherMain
 import com.arnab.weatherforecast.repo.WeatherRepository
 import com.arnab.weatherforecast.ui.theme.WeatherForecastTheme
 import com.google.android.gms.common.ConnectionResult
