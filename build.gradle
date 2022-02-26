@@ -20,6 +20,11 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
+/**
+ * Output:
+ * task test{} is required to build
+ *  -> "$project.buildDir/jacoco/testReleaseUnitTest.exec" file
+ * */
 task test {
 
 }
@@ -31,11 +36,23 @@ task testDebugUnitTest {
 task testReleaseUnitTest {
 
 }
-
+/**
+ * Prerequisite: REQUIRED connected devices! to run
+ * Output:
+ * task createDebugCoverageReport {} is required to build the output:
+ *  -> "${buildDir}/outputs/code_coverage/debugAndroidTest/connected/YOUR_ANDROID_DEVICE_NAME(AVD)-coverage.ec" file
+ */
 task createDebugCoverageReport {
 
 }
-
+/**
+ * Prerequisite: REQUIRED these 2 files below to run task jacocoTestReport
+ * 1. "$project.buildDir/jacoco/testReleaseUnitTest.exec" file
+ * 2. "${buildDir}/outputs/code_coverage/debugAndroidTest/connected/OUR_ANDROID_DEVICE_NAME(AVD)-coverage.ec.ec" file
+ * Output:
+ * task jacocoTestReport {} is required to build the final Code Coverage output:
+ *  -> "${buildDir}/reports/jacoco/jacocoTestReport/(html, jacocoTestReport.csv, jacocoTestReport.xml)"
+ */
 task jacocoTestReport {
 
 }
