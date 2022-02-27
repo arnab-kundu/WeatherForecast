@@ -1,4 +1,3 @@
-
 task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'createDebugCoverageReport']) {
 
     reports {
@@ -50,12 +49,17 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest', 'crea
                       '**/*$Result$*.*']
 
     def debugTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: fileFilter)
-    def mainSrc = fileTree(dir: "${projectDir}/src/main/java", excludes: fileFilter)
+    /** Source file not found in this mainSrc path */
+    //def mainSrc = fileTree(dir: "${projectDir}/src/main/java", excludes: fileFilter)
+    def mainSrc = "$project.projectDir/src/main/java"
 
+    //System.out.println(debugTree)
+    //System.out.println(mainSrc)
     getSourceDirectories().setFrom(files([mainSrc]))
     getClassDirectories().setFrom(files([debugTree]))
 
-    //def unitTestsData = "$project.buildDir/jacoco/testDebugUnitTest.exec"
+    /** This file(testDebugUnitTest.exec) not generated */
+    //def unitTestsData = "$project.buildDir/jacoco/testDebugUnitTest.exec" // This file not generated
     def unitTestsData = "$project.buildDir/jacoco/testReleaseUnitTest.exec"
     def androidTestsData = fileTree(dir: "${buildDir}/outputs/code_coverage/debugAndroidTest/connected/",
             includes: ["**/*.ec"])

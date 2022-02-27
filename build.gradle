@@ -52,6 +52,7 @@ task createDebugCoverageReport {
  * Output:
  * task jacocoTestReport {} is required to build the final Code Coverage output:
  *  -> "${buildDir}/reports/jacoco/jacocoTestReport/(html, jacocoTestReport.csv, jacocoTestReport.xml)"
+ *  Note: "${buildDir}/reports/coverage/androidTest/debug/index.html" file don't have line by line code coverage
  */
 task jacocoTestReport {
 
