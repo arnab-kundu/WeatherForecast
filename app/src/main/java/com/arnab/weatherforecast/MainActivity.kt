@@ -38,7 +38,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.room.Room
 import coil.compose.rememberImagePainter
+import com.arnab.database.WeatherDatabase
+import com.arnab.database.entity.LocationEntity
 import com.arnab.network.RetrofitClient
 import com.arnab.network.WeatherApi
 import com.arnab.network.response.ForecastResponse
@@ -56,7 +59,6 @@ import kotlinx.coroutines.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.lang.Exception
 import kotlin.math.roundToInt
 
 
@@ -493,7 +495,10 @@ class MainActivity : ComponentActivity(),
         if (connectionResult.hasResolution()) {
             try {
                 // Start an Activity that tries to resolve the error
-                connectionResult.startResolutionForResult(this, CONNECTION_FAILURE_RESOLUTION_REQUEST)
+                connectionResult.startResolutionForResult(
+                    this,
+                    CONNECTION_FAILURE_RESOLUTION_REQUEST
+                )
                 /**
                  * Thrown if Google Play services canceled the original
                  * PendingIntent
@@ -519,5 +524,25 @@ class MainActivity : ComponentActivity(),
         Toast.makeText(this, "Lat: $currentLatitude, Long: $currentLongitude", Toast.LENGTH_LONG).show();
         Log.i(TAG, "onLocationChanged: Lat: $currentLatitude, Long: $currentLongitude")
         //backgroundThreadWork(location = location)
+
+        val db =
+            Room
+                .databaseBuilder(
+                    this,
+                    WeatherDatabase::class.java,
+                    "WeatherForecast"
+                )
+                .build()
+
+        val locationDao = db.getLocationDao()
+        val locationEntity = LocationEntity(
+            name = null,
+            latitude = currentLatitude,
+            longitude = currentLongitude
+        )
+
+        CoroutineScope(Dispatchers.Main).launch {
+            locationDao.insert(locationEntity)
+        }
     }
 }
