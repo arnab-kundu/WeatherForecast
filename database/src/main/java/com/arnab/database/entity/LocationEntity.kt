@@ -13,7 +13,7 @@ data class LocationEntity(
     var name: String?,
     var latitude: Double,
     var longitude: Double,
-    var lastUpdateTimeStamp: Long =System.currentTimeMillis()
+    var lastUpdateTimeStamp: Long = System.currentTimeMillis()
 ) : Parcelable {
     @PrimaryKey
     var id: String = UUID.randomUUID().toString()

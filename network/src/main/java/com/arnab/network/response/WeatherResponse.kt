@@ -14,7 +14,7 @@ data class WeatherResponse(
     val visibility: Int,
     val weather: List<Weather>,
     val wind: Wind
-){
+) {
 
     data class Clouds(
         val all: Int
@@ -31,14 +31,17 @@ data class WeatherResponse(
         val pressure: Int,
         val temp: Double,
         val temp_max: Double,
-        val temp_min: Double
+        val temp_min: Double,
+        val sea_level: Int,
+        val grnd_level: Int,
     )
 
     data class Sys(
         val id: Int,
         val sunrise: Int,
         val sunset: Int,
-        val type: Int
+        val type: Int,
+        val country: String,
     )
 
     data class Weather(

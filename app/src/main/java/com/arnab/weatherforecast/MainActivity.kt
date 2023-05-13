@@ -42,6 +42,7 @@ import androidx.room.Room
 import coil.compose.rememberImagePainter
 import com.arnab.database.WeatherDatabase
 import com.arnab.database.entity.LocationEntity
+import com.arnab.database.entity.WeatherReportEntity
 import com.arnab.network.RetrofitClient
 import com.arnab.network.WeatherApi
 import com.arnab.network.response.ForecastResponse
@@ -207,6 +208,50 @@ class MainActivity : ComponentActivity(),
             })
     }
 
+    private fun saveWeatherResponseInDatabase(weatherResponse: WeatherResponse) {
+
+        val db = Room.databaseBuilder(
+            this,
+            WeatherDatabase::class.java,
+            "WeatherForecast"
+        ).build()
+
+        val weatherDao = db.getWeatherDao()
+        val weatherReportEntity = WeatherReportEntity(
+            location_id = weatherResponse.id,
+            location_name = weatherResponse.name,
+            location_timezone = weatherResponse.timezone,
+            visibility = weatherResponse.visibility,
+            dt = weatherResponse.dt,
+            latitude = weatherResponse.coord.lat,
+            longitude = weatherResponse.coord.lon,
+            main_temperature = weatherResponse.main.temp,
+            main_temperature_feels_like = weatherResponse.main.feels_like,
+            main_temperature_min = weatherResponse.main.temp_min,
+            main_temperature_max = weatherResponse.main.temp_max,
+            main_pressure = weatherResponse.main.pressure,
+            main_humidity = weatherResponse.main.humidity,
+            main_sea_level = weatherResponse.main.sea_level,
+            main_grnd_level = weatherResponse.main.grnd_level,
+            weather_id = weatherResponse.weather[0].id,
+            weather_main = weatherResponse.weather[0].main,
+            weather_description = weatherResponse.weather[0].description,
+            weather_icon = weatherResponse.weather[0].icon,
+            wind_speed = weatherResponse.wind.speed,
+            wind_degree = weatherResponse.wind.deg,
+            wind_gust = weatherResponse.wind.gust,
+            sys_id = weatherResponse.sys.id,
+            sys_type = weatherResponse.sys.type,
+            sys_country_code = weatherResponse.sys.country,
+            sys_sunrise = weatherResponse.sys.sunrise,
+            sys_sunset = weatherResponse.sys.sunset,
+        )
+
+        CoroutineScope(Dispatchers.Main).launch {
+            weatherDao.insert(weatherReportEntity)
+        }
+    }
+
     @Deprecated("unused")
     fun networkRepo() {
         val repo = WeatherRepository()
@@ -246,10 +291,11 @@ class MainActivity : ComponentActivity(),
     private fun backgroundThreadWork(location: Location?) {
         val repo = WeatherRepository()
         CoroutineScope(context = Dispatchers.Main).launch {
-            val deferred: Deferred<WeatherResponse?> = CoroutineScope(context = Dispatchers.IO).async {
-                delay(5000)
-                repo.getCurrentWeatherReportForGeometricLocation(location)// TODO provide location(lat,long)
-            }
+            val deferred: Deferred<WeatherResponse?> =
+                CoroutineScope(context = Dispatchers.IO).async {
+                    delay(5000)
+                    repo.getCurrentWeatherReportForGeometricLocation(location)// TODO provide location(lat,long)
+                }
             val responseBody: WeatherResponse? = deferred.await()
             if (responseBody != null) {
                 Log.i(TAG, "Response: ${responseBody.toString()}")
@@ -260,6 +306,8 @@ class MainActivity : ComponentActivity(),
                 mVisibilityDistance.value = responseBody.visibility / 1000
                 mLocationName.value = responseBody.name
                 mWeatherMain.value = responseBody.weather[0].main
+
+                saveWeatherResponseInDatabase(responseBody)
             }
         }
 
@@ -479,6 +527,8 @@ class MainActivity : ComponentActivity(),
             Toast.makeText(this, "Lat: $currentLatitude, Long: $currentLongitude", Toast.LENGTH_LONG).show();
             Log.i(TAG, "onConnected: Lat: $currentLatitude, Long: $currentLongitude")
             backgroundThreadWork(location = location)
+
+            saveGPSLocationInDatabase(latitude = currentLatitude, longitude = currentLongitude)
         }
     }
 
@@ -525,20 +575,21 @@ class MainActivity : ComponentActivity(),
         Log.i(TAG, "onLocationChanged: Lat: $currentLatitude, Long: $currentLongitude")
         //backgroundThreadWork(location = location)
 
-        val db =
-            Room
-                .databaseBuilder(
-                    this,
-                    WeatherDatabase::class.java,
-                    "WeatherForecast"
-                )
-                .build()
+        saveGPSLocationInDatabase(latitude = currentLatitude, longitude = currentLongitude)
+    }
+
+    private fun saveGPSLocationInDatabase(latitude: Double, longitude: Double) {
+        val db = Room.databaseBuilder(
+            this,
+            WeatherDatabase::class.java,
+            "WeatherForecast"
+        ).build()
 
         val locationDao = db.getLocationDao()
         val locationEntity = LocationEntity(
             name = null,
-            latitude = currentLatitude,
-            longitude = currentLongitude
+            latitude = latitude,
+            longitude = longitude
         )
 
         CoroutineScope(Dispatchers.Main).launch {
